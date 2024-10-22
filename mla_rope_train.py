@@ -25,13 +25,16 @@ class PPLMLATrainRotaryPositionEmbeddingLayer(nn.Module):
 
     def forward(self, q, kv, k_pe, cos, sin, position_ids):
         res_kv = torch.empty((self.bsz, self.seq_len, 2, self.num_heads, (self.qk_nope_head_dim+self.qk_rope_head_dim)), 
-            dtype=input.dtype, 
-            device=input.device)
+            dtype=q.dtype, 
+            device=q.device)
         my_cuda_extension.ppl_mla_rope_forward(
             kv.contiguous(), k_pe.contiguous(), cos.contiguous(), sin.contiguous(), position_ids.contiguous(), 
             self.bsz, self.seq_len, self.num_heads, self.v_head_dim, self.qk_nope_head_dim, self.qk_rope_head_dim,
             q.contiguous(), res_kv)
-        return 
+        return q, res_kv, 
+
+    def backward():
+        pass
 
 if __name__ == "__main__":
     seed = 42
@@ -85,50 +88,49 @@ if __name__ == "__main__":
     sin = sin.to(device)
     position_ids = position_ids.to(device)
 
-    model = PPLMLATrainRotaryPositionEmbeddingLayer().to(device)
+    model = PPLMLATrainRotaryPositionEmbeddingLayer(batch_size, seq_len, num_heads, v_head_dim, qk_nope_head_dim, qk_rope_head_dim).to(device)
     refq, refkv = model(
         q,
         kv,
         k_pe,
         cos,
         sin,
-        position_ids,
-        batch_size,
-        seq_len,
-        num_heads,
-        qk_nope_head_dim,
-        qk_rope_head_dim
+        position_ids
     )
 
     print("refq ", refq.dtype, refq.shape)
     print("refkv ", refkv.dtype, refkv.shape)
+    refq = refq.to(host)
+    refkv = refkv.to(host)
+    refq.detach().numpy().tofile('refq.bin')
+    refkv.detach().numpy().tofile('refkv.bin')
 
-    q.retain_grad()
-    kv.retain_grad()
-    k_pe.retain_grad()
+    # q.retain_grad()
+    # kv.retain_grad()
+    # k_pe.retain_grad()
 
-    # loss = refq.sum() + refkv.sum()
-    # loss.backward()
+    # # loss = refq.sum() + refkv.sum()
+    # # loss.backward()
 
-    external_grad_refq  = torch.rand_like(refq)
-    external_grad_refkv = torch.rand_like(refkv)
-    torch.autograd.backward([refq, refkv], [external_grad_refq, external_grad_refkv])
+    # external_grad_refq  = torch.rand_like(refq)
+    # external_grad_refkv = torch.rand_like(refkv)
+    # torch.autograd.backward([refq, refkv], [external_grad_refq, external_grad_refkv])
 
-    print("external_grad_refq ", external_grad_refq.dtype, external_grad_refq.shape)
-    print("external_grad_refkv ", external_grad_refkv.dtype, external_grad_refkv.shape)
-    external_grad_refq.to(host).numpy().tofile('external_grad_q.bin')
-    external_grad_refkv.to(host).numpy().tofile('external_grad_kv.bin')
+    # print("external_grad_refq ", external_grad_refq.dtype, external_grad_refq.shape)
+    # print("external_grad_refkv ", external_grad_refkv.dtype, external_grad_refkv.shape)
+    # external_grad_refq.to(host).numpy().tofile('external_grad_q.bin')
+    # external_grad_refkv.to(host).numpy().tofile('external_grad_kv.bin')
 
-    # print("q.grad:", q.grad)
-    # print("kv.grad:", kv.grad)
-    # print("k_pe.grad:", k_pe.grad)
+    # # print("q.grad:", q.grad)
+    # # print("kv.grad:", kv.grad)
+    # # print("k_pe.grad:", k_pe.grad)
 
-    # refq = refq.to(host)
-    # refkv = refkv.to(host)
+    # # refq = refq.to(host)
+    # # refkv = refkv.to(host)
 
-    print("q.grad ", q.grad.dtype, q.grad.shape)
-    print("kv.grad ", kv.grad.dtype, kv.grad.shape)
-    print("k_pe.grad ", k_pe.grad.dtype, k_pe.grad.shape)
-    q.grad.to(host).numpy().tofile('q_grad_ref.bin')
-    kv.grad.to(host).numpy().tofile('kv_grad_ref.bin')
-    k_pe.grad.to(host).numpy().tofile('k_pe_grad_ref.bin')
+    # print("q.grad ", q.grad.dtype, q.grad.shape)
+    # print("kv.grad ", kv.grad.dtype, kv.grad.shape)
+    # print("k_pe.grad ", k_pe.grad.dtype, k_pe.grad.shape)
+    # q.grad.to(host).numpy().tofile('q_grad_ref.bin')
+    # kv.grad.to(host).numpy().tofile('kv_grad_ref.bin')
+    # k_pe.grad.to(host).numpy().tofile('k_pe_grad_ref.bin')
