@@ -13,6 +13,7 @@ setup(
                                     #  '-L/mnt/llm/workspace/xupinjie/software/miniconda3/lib/python3.12/site-packages/torch/include', 
                                     #  '-L/mnt/llm/workspace/xupinjie/software/miniconda3/lib/python3.12/site-packages/torch/lib',
                                      '-lcuda_static_lib', 
+                                     '-lrope_cuda_static_lib', 
                                     #  '-ltorch',
                                     #  '-ltorch_cuda',
                                      ], 
