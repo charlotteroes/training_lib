@@ -1,5 +1,3 @@
-#include <cuda_fp16.h>
-
 extern "C" int MLATrainRotaryPositionEmbeddingForwardAPI(
         const void* kv, 
         const void* k_pe,

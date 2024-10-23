@@ -46,11 +46,11 @@ class PPLMLATrainRotaryPositionEmbeddingLayer(torch.autograd.Function):
         qk_rope_head_dim = ctx.qk_rope_head_dim
         
         dst_grad_kv = torch.empty((bsz, seq_len, num_heads, (qk_nope_head_dim+v_head_dim)), 
-            dtype=q.dtype, 
-            device=q.device)
+            dtype=grad_q.dtype, 
+            device=grad_q.device)
         dst_grad_k_pe = torch.empty((bsz, seq_len, 1, qk_rope_head_dim), 
-            dtype=q.dtype, 
-            device=q.device)
+            dtype=grad_q.dtype, 
+            device=grad_q.device)
         my_cuda_extension.ppl_mla_rope_backward(
             grad_kv.contiguous(), cos.contiguous(), sin.contiguous(), position_ids.contiguous(), 
             bsz, seq_len, num_heads, v_head_dim, qk_nope_head_dim, qk_rope_head_dim,
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     # np.random.seed(seed)  # NumPy 的随机种子
     device = torch.device("cuda")
     host = torch.device("cpu")
-    torch.set_default_dtype(torch.float16)
+    torch.set_default_dtype(torch.bfloat16)
 
     # 设置参数
     batch_size = 1
@@ -91,14 +91,14 @@ if __name__ == "__main__":
     external_grad_refq = torch.randn(batch_size, seq_len, num_heads, qk_nope_head_dim+qk_rope_head_dim)
     external_grad_refkv = torch.randn(batch_size, seq_len, 2, num_heads, qk_nope_head_dim+qk_rope_head_dim)
 
-    # q.numpy().tofile('q.bin')
-    # kv.numpy().tofile('kv.bin')
-    # k_pe.numpy().tofile('k_pe.bin')
-    cos.numpy().tofile('cos.bin')
-    sin.numpy().tofile('sin.bin')
-    position_ids.numpy().tofile('position_ids.bin')
-    external_grad_refq.numpy().tofile('external_grad_q.bin')
-    external_grad_refkv.numpy().tofile('external_grad_kv.bin')
+    # q.view(torch.uint16).numpy().tofile('q.bin')
+    # kv.view(torch.uint16).numpy().tofile('kv.bin')
+    # k_pe.view(torch.uint16).numpy().tofile('k_pe.bin')
+    cos.view(torch.uint16).numpy().tofile('cos.bin')
+    sin.view(torch.uint16).numpy().tofile('sin.bin')
+    position_ids.view(torch.uint16).numpy().tofile('position_ids.bin')
+    external_grad_refq.view(torch.uint16).numpy().tofile('external_grad_q.bin')
+    external_grad_refkv.view(torch.uint16).numpy().tofile('external_grad_kv.bin')
 
     print("q ", q.dtype, q.shape)
     print("kv ", kv.dtype, kv.shape)
@@ -107,12 +107,12 @@ if __name__ == "__main__":
     print("sin ", sin.dtype, sin.shape)
     print("position_ids ", position_ids.dtype, position_ids.shape)
 
-    q.detach().numpy().tofile('q.bin')
-    kv.detach().numpy().tofile('kv.bin')
-    k_pe.detach().numpy().tofile('k_pe.bin')
-    cos.detach().numpy().tofile('cos.bin')
-    sin.detach().numpy().tofile('sin.bin')
-    position_ids.detach().numpy().tofile('position_ids.bin')
+    q.detach().view(torch.uint16).numpy().tofile('q.bin')
+    kv.detach().view(torch.uint16).numpy().tofile('kv.bin')
+    k_pe.detach().view(torch.uint16).numpy().tofile('k_pe.bin')
+    cos.detach().view(torch.uint16).numpy().tofile('cos.bin')
+    sin.detach().view(torch.uint16).numpy().tofile('sin.bin')
+    position_ids.detach().view(torch.uint16).numpy().tofile('position_ids.bin')
 
     q = q.to(device)
     kv = kv.to(device)
@@ -141,8 +141,8 @@ if __name__ == "__main__":
 
     print("refq ", refq.dtype, refq.shape)
     print("refkv ", refkv.dtype, refkv.shape)
-    refq.to(host).detach().numpy().tofile('refq.bin')
-    refkv.to(host).detach().numpy().tofile('refkv.bin')
+    refq.to(host).detach().view(torch.uint16).numpy().tofile('refq.bin')
+    refkv.to(host).detach().view(torch.uint16).numpy().tofile('refkv.bin')
 
     q.retain_grad()
     kv.retain_grad()
@@ -165,6 +165,6 @@ if __name__ == "__main__":
     print("q.grad ", q.grad.dtype, q.grad.shape)
     print("kv.grad ", kv.grad.dtype, kv.grad.shape)
     print("k_pe.grad ", k_pe.grad.dtype, k_pe.grad.shape)
-    q.grad.to(host).numpy().tofile('q_grad_ref.bin')
-    kv.grad.to(host).numpy().tofile('kv_grad_ref.bin')
-    k_pe.grad.to(host).numpy().tofile('k_pe_grad_ref.bin')
+    q.grad.to(host).view(torch.uint16).numpy().tofile('q_grad_ref.bin')
+    kv.grad.to(host).view(torch.uint16).numpy().tofile('kv_grad_ref.bin')
+    k_pe.grad.to(host).view(torch.uint16).numpy().tofile('k_pe_grad_ref.bin')

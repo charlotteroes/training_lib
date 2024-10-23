@@ -102,10 +102,10 @@ extern "C" int ppl_mla_rope_forward(
     torch::Tensor res_kv)
 {
     return MLATrainRotaryPositionEmbeddingForwardAPI(
-        (void*)kv.data_ptr<at::Half>(),
-        (void*)k_pe.data_ptr<at::Half>(),
-        (void*)cos.data_ptr<at::Half>(),
-        (void*)sin.data_ptr<at::Half>(),
+        (void*)kv.data_ptr<at::BFloat16>(),
+        (void*)k_pe.data_ptr<at::BFloat16>(),
+        (void*)cos.data_ptr<at::BFloat16>(),
+        (void*)sin.data_ptr<at::BFloat16>(),
         (int64_t*)position_ids.data_ptr<int64_t>(),
         batch_size,
         seq_len,
@@ -113,8 +113,8 @@ extern "C" int ppl_mla_rope_forward(
         v_head_dim,
         qk_nope_head_dim,
         qk_rope_head_dim,
-        (void*)res_q.data_ptr<at::Half>(),
-        (void*)res_kv.data_ptr<at::Half>());
+        (void*)res_q.data_ptr<at::BFloat16>(),
+        (void*)res_kv.data_ptr<at::BFloat16>());
 }
 
 extern "C"  int ppl_mla_rope_backward(
@@ -134,9 +134,9 @@ extern "C"  int ppl_mla_rope_backward(
 {
     
     return MLATrainRotaryPositionEmbeddingBackwardAPI(
-        (void*)src_grad_kv.data_ptr<at::Half>(),
-        (void*)cos.data_ptr<at::Half>(),
-        (void*)sin.data_ptr<at::Half>(),
+        (void*)src_grad_kv.data_ptr<at::BFloat16>(),
+        (void*)cos.data_ptr<at::BFloat16>(),
+        (void*)sin.data_ptr<at::BFloat16>(),
         (int64_t*)position_ids.data_ptr<int64_t>(),
         batch_size,
         seq_len,
@@ -144,9 +144,9 @@ extern "C"  int ppl_mla_rope_backward(
         v_head_dim,
         qk_nope_head_dim,
         qk_rope_head_dim,
-        (void*)dst_grad_q.data_ptr<at::Half>(),
-        (void*)dst_grad_kv.data_ptr<at::Half>(),
-        (void*)dst_grad_k_pe.data_ptr<at::Half>());
+        (void*)dst_grad_q.data_ptr<at::BFloat16>(),
+        (void*)dst_grad_kv.data_ptr<at::BFloat16>(),
+        (void*)dst_grad_k_pe.data_ptr<at::BFloat16>());
 }
 
 PYBIND11_MODULE(my_cuda_extension, m) {
