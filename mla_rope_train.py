@@ -46,11 +46,11 @@ class PPLMLATrainRotaryPositionEmbeddingLayer(torch.autograd.Function):
         qk_rope_head_dim = ctx.qk_rope_head_dim
         
         dst_grad_kv = torch.empty((bsz, seq_len, num_heads, (qk_nope_head_dim+v_head_dim)), 
-            dtype=q.dtype, 
-            device=q.device)
+            dtype=grad_q.dtype, 
+            device=grad_q.device)
         dst_grad_k_pe = torch.empty((bsz, seq_len, 1, qk_rope_head_dim), 
-            dtype=q.dtype, 
-            device=q.device)
+            dtype=grad_q.dtype, 
+            device=grad_q.device)
         my_cuda_extension.ppl_mla_rope_backward(
             grad_kv.contiguous(), cos.contiguous(), sin.contiguous(), position_ids.contiguous(), 
             bsz, seq_len, num_heads, v_head_dim, qk_nope_head_dim, qk_rope_head_dim,
